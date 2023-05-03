@@ -3,7 +3,7 @@
     <head>
         <title>&#x1F50D;</title>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0">
+		<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0, user-scalable=0">
         <script>
 		function LoadRequest(ID,Action){
 			let V=document.getElementById(ID).value
@@ -14,28 +14,25 @@
         function SearchGeneral(){ LoadRequest("general-keyword","wp-admin/edit.php?post_status=all&post_type=shop_order&s=") }
         </script>
 		<style>
-		* { border:0px;  margin: 0; padding:20px; }
-		input, button { font-size:30px; background:transparent; }
-		.solid-border{border:1px solid;}
-		.offset-left{margin-left:-80px;}
+		* { overflow:hidden; border:0; margin:0; padding:0; }
+		body{}
+		input, button { font-size:5vw; font-weight:600; margin:4vh 0; padding:2vh 2vw; background:transparent; }
+		.input-box{border:1px solid; max-width:400px;}
+		.offset-left{margin-left:-12vw;}
 		</style>
     </head>
     <body>
-	
 	<center>
-			<div height=20px>&nbsp;</div>	
 			<form action="javascript:SearchOrder()">
-				<input class="solid-border" id="order-number" placeholder="快速查單" />
+				<input class="input-box" id="order-number" placeholder="快速查單" />
 				<button class="offset-left">&#x1F50D;</button>
 			</form>
-			<div height=20px>&nbsp;</div>
 			<form action="javascript:SearchUser()">
-				<input class="solid-border" id="user-keyword" placeholder="查詢用戶" />
+				<input class="input-box" id="user-keyword" placeholder="查詢用戶" />
 				<button class="offset-left">&#x1F50D;</button>
 			</form>
-			<div height=20px>&nbsp;</div>
 			<form action="javascript:SearchGeneral()">
-				<input class="solid-border" id="general-keyword" placeholder="後台查單" />
+				<input class="input-box" id="general-keyword" placeholder="後台查單" />
 				<button class="offset-left">&#x1F50D;</button>
 			</form>
 	</center>
