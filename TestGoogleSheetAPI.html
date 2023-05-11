@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="GoogleSheetAPI.js"></script>
+</head>
+
+<body>
+    <div id="mydisplay">
+        this is my display
+    </div>
+
+    <button id="mybutton">click me</button>
+
+</body>
+<script>
+    document.getElementById("mybutton").onclick = () => { Replace("mydisplay").By(Read("mySheet", "A2:C5")) }
+</script>
+
+</html>
