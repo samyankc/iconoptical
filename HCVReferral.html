@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>HCV Referral</title>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <script src="JS/jquery-3.6.4.min.js"></script>
+</head>
+
+<body>
+    <div id="mydisplay">this is the display area</div>
+    <button id="mybutton">click me</button>
+</body>
+<script>
+    var ActionURL = "https://script.google.com/macros/s/AKfycbzJTWgyVOlQdq3J9OEQ88RLE3jU_6-EUtLpFu3BBAgyUmIOrJGULprFlg9Uow34AcxKiw/exec"
+
+    async function ReadTable() {
+        var Response
+        await $.ajax({ url: `${ActionURL}?action=read` })
+            .then((e) => { Response = e })
+        return Response
+    }
+
+    $('#mybutton').on('click', async () => {
+        var newContent = "<div>Getting Response</div>";
+        var Table = (await ReadTable()).Rows
+        for (const Row in Table) {
+            $('#mydisplay').html
+            newContent += `<div>${Table[Row]}</div>`
+            console.log(Row, Table[Row])
+        }
+        $("#mydisplay").html(newContent);
+    })
+</script>
+
+</html>
