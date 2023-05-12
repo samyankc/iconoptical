@@ -15,25 +15,26 @@
     <button id="mybutton">click me</button>
 </body>
 <script>
-    var ActionURL = "https://script.google.com/macros/s/AKfycbzJTWgyVOlQdq3J9OEQ88RLE3jU_6-EUtLpFu3BBAgyUmIOrJGULprFlg9Uow34AcxKiw/exec"
+    var ActionURL = "https://script.google.com/macros/s/AKfycbwH9tbFeM4hXR5gFAAT-fkuKrU7tZW0dJ9Qh0JMrpTXpPjICpEKZRgynacMcYnNMrpMFg/exec"
 
-    async function ReadTable() {
-        var Response
-        await $.ajax({ url: `${ActionURL}?action=read` })
-            .then((e) => { Response = e })
-        return Response
+    function ReadTable() {
+        return $.get(ActionURL, { action: 'read' })
     }
 
-    $('#mybutton').on('click', async () => {
+    $('#mybutton').on('click', () => {
         var newContent = "<div>Getting Response</div>";
-        var Table = (await ReadTable()).Rows
-        for (const Row in Table) {
-            $('#mydisplay').html
-            newContent += `<div>${Table[Row]}</div>`
-            console.log(Row, Table[Row])
-        }
-        $("#mydisplay").html(newContent);
+        ReadTable()
+            .fail(() => { $("#mydisplay").html('Fail'); })
+            .done((Table) => {
+                for (const Row in Table) {
+                    $('#mydisplay').html
+                    newContent += `<div>${Table[Row]}</div>`
+                    console.log(Table[Row])
+                }
+                $("#mydisplay").html(newContent);
+            })
     })
+
 </script>
 
 </html>
