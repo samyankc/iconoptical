@@ -10,9 +10,25 @@
     <script src='JS/jquery-3.6.4.min.js'></script>
     <style>
         .card {
-            border-radius: 10px;
-            margin: 2vh 2vw;
+
+            border-radius: 1vw;
+            margin: 1vh 1vw;
+            padding: 1vh 1vw;
             background-color: rgba(144, 220, 230, 0.4);
+            width: fit-content;
+            block-size: fit-content;
+        }
+
+        table {
+            border: 0;
+        }
+
+        table td {
+            padding: 0 1vw;
+        }
+
+        .data-value {
+            font-weight: 600;
         }
     </style>
 </head>
@@ -20,28 +36,63 @@
 <body>
     <div id='output'>this is the display area</div>
     <button id='mybutton'>click me</button>
+    <button id='testbutton'>test</button>
+
+    <div id='card-template' class='card' style='display: none;'>
+        <table>
+            <tr class='data-row'>
+                <td class='data-key'></td>
+                <td class='data-value'></td>
+            </tr>
+        </table>
+    </div>
 </body>
 <script>
     var ActionURL = 'https://script.google.com/macros/s/AKfycbwH9tbFeM4hXR5gFAAT-fkuKrU7tZW0dJ9Qh0JMrpTXpPjICpEKZRgynacMcYnNMrpMFg/exec'
     var OutputDevice = $('#output')
     function Output(Content) { OutputDevice.html(Content) }
 
+    function CardClone() {
+        var NewCard = $('#card-template').clone(true).removeAttr('style').removeAttr('id')
+        NewCard.children('table').children('tbody').children().remove()
+        return NewCard
+    }
+
+    function RowClone() {
+        return $('#card-template .data-row').clone(true)
+    }
+
+    function MakeCard(HeaderRow, DataRow) {
+        var NewCard = CardClone()
+        var CardTable = NewCard.children('table').children('tbody')
+        for (const i in HeaderRow) {
+            var NewRow = RowClone()
+            NewRow.children('.data-key').html(HeaderRow[i])
+            NewRow.children('.data-value').html(DataRow[i])
+            NewRow.appendTo(CardTable)
+        }
+        NewCard.appendTo(OutputDevice)
+    }
 
     function ReadTableMockData() {
         return [
             ["Key", "TimeStamp", "Name", "Phone", "Claim", "Invoice", "PickUp", "Status"],
             [0, "abc", "Chan Tai Man", 91234567, 1500, "#101001", "太和", ""],
-            [1, "def", "Wong Ming", 92345678, 688, "#101123, #101122", "大埔", "done"]
+            [1, "def", "Wong Ming1", 92345678, 688, "#101123, #101122", "大埔", "done"],
+            [2, "def123", "Wong Ming2", 92345678, 688, "#101123, #101122", "大埔", "done"],
+            [3, "def4456", "Wong Ming3", 92345678, 688, "#101123, #101122", "大埔", "done"]
         ]
     }
 
     function ReadTableMock() {
+        var L = (cb) => {
+            cb(ReadTableMockData())
+            return ReadTableMock()
+        }
         return {
             fail: ReadTableMock, // no-op
-            done: (cb) => {
-                cb(ReadTableMockData())
-                return ReadTableMock()
-            }
+            done: L,
+            then: L
         }
     }
 
@@ -61,6 +112,15 @@
                 }
                 Output(newContent);
             })
+    })
+
+    $('#testbutton').on('click', () => {
+        ReadTable().then((DataTable) => {
+            for (const i in DataTable) {
+                if (i == 0) continue
+                MakeCard(DataTable[0], DataTable[i])
+            }
+        })
     })
 
 </script>
