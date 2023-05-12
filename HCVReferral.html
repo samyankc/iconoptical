@@ -4,34 +4,62 @@
 
 <head>
     <title>HCV Referral</title>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0, user-scalable=0">
-    <script src="JS/jquery-3.6.4.min.js"></script>
+    <meta charset='UTF-8'>
+    <meta name='viewport'
+        content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0, user-scalable=0'>
+    <script src='JS/jquery-3.6.4.min.js'></script>
+    <style>
+        .card {
+            border-radius: 10px;
+            margin: 2vh 2vw;
+            background-color: rgba(144, 220, 230, 0.4);
+        }
+    </style>
 </head>
 
 <body>
-    <div id="mydisplay">this is the display area</div>
-    <button id="mybutton">click me</button>
+    <div id='output'>this is the display area</div>
+    <button id='mybutton'>click me</button>
 </body>
 <script>
-    var ActionURL = "https://script.google.com/macros/s/AKfycbwH9tbFeM4hXR5gFAAT-fkuKrU7tZW0dJ9Qh0JMrpTXpPjICpEKZRgynacMcYnNMrpMFg/exec"
+    var ActionURL = 'https://script.google.com/macros/s/AKfycbwH9tbFeM4hXR5gFAAT-fkuKrU7tZW0dJ9Qh0JMrpTXpPjICpEKZRgynacMcYnNMrpMFg/exec'
+    var OutputDevice = $('#output')
+    function Output(Content) { OutputDevice.html(Content) }
+
+
+    function ReadTableMockData() {
+        return [
+            ["Key", "TimeStamp", "Name", "Phone", "Claim", "Invoice", "PickUp", "Status"],
+            [0, "abc", "Chan Tai Man", 91234567, 1500, "#101001", "太和", ""],
+            [1, "def", "Wong Ming", 92345678, 688, "#101123, #101122", "大埔", "done"]
+        ]
+    }
+
+    function ReadTableMock() {
+        return {
+            fail: ReadTableMock, // no-op
+            done: (cb) => {
+                cb(ReadTableMockData())
+                return ReadTableMock()
+            }
+        }
+    }
 
     function ReadTable() {
+        return ReadTableMock()
         return $.get(ActionURL, { action: 'read' })
     }
 
     $('#mybutton').on('click', () => {
-        var newContent = "<div>Getting Response</div>";
+        var newContent = '<div>Getting Response</div>';
         ReadTable()
-            .fail(() => { $("#mydisplay").html('Fail'); })
+            .fail(() => { Output('Fail'); })
             .done((Table) => {
                 for (const Row in Table) {
-                    $('#mydisplay').html
-                    newContent += `<div>${Table[Row]}</div>`
+                    newContent += `<div class='card'>${Table[Row]}</div>`
                     console.log(Table[Row])
                 }
-                $("#mydisplay").html(newContent);
+                Output(newContent);
             })
     })
 
