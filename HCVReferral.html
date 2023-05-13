@@ -9,46 +9,68 @@
         content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0, user-scalable=0'>
     <script src='JS/jquery-3.6.4.min.js'></script>
     <style>
-        .card {
-
-            border-radius: 1vw;
-            margin: 1vh 1vw;
-            padding: 1vh 1vw;
-            background-color: rgba(144, 220, 230, 0.4);
-            width: fit-content;
-            block-size: fit-content;
-        }
-
-        table {
+        body {
+            width: 100vw;
             border: 0;
+            padding: 0;
+            margin: 0;
         }
 
-        table td {
-            padding: 0 1vw;
+        .center {
+            margin: 0 auto;
+            padding: 2%;
+            width: fit-content;
+            max-width: 600px;
         }
 
-        .data-value {
+        #output {
+            display: flex;
+            flex-flow: row;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: transparent;
+            padding: 5%;
+            margin: 5%;
+            width: 30vw;
+            /* border: 1px solid; */
+        }
+
+        .card {
+            flex-basis: 40%;
+            max-width: 40%;
+            border-radius: 1vw;
+            margin: 1vh auto;
+            padding: 2%;
             font-weight: 600;
+            background-color: rgba(144, 220, 230, 0.4);
+            /* white-space: nowrap;
+            overflow: hidden;
+            text-overflow:ellipsis; */
+        }
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 
 <body>
-    <div id='output'>this is the display area</div>
-    <button id='mybutton'>click me</button>
-    <button id='testbutton'>test</button>
-
-    <div id='card-template' class='card' style='display: none;'>
-        <table>
-            <tr class='data-row'>
-                <td class='data-key'></td>
-                <td class='data-value'></td>
-            </tr>
-        </table>
+    <div class="center">
+        <button>新登記</button><br>
+        <button>查看待覆驗</button>
+        <button>查看已覆驗</button>
+        <button>查看完成</button>
+        <button onclick="CheckAll()">查看全部</button>
+        <div id='output' class="center"></div>
+        <button id='mybutton' class="hidden">click me</button>
+        <button id='testbutton'>test</button>
     </div>
+    <div id='card-template' class='card' style='display: none;'></div>
 </body>
 <script>
-    var ActionURL = 'https://script.google.com/macros/s/AKfycbwH9tbFeM4hXR5gFAAT-fkuKrU7tZW0dJ9Qh0JMrpTXpPjICpEKZRgynacMcYnNMrpMFg/exec'
+    var ActionURL = 'https://script.google.com/macros/s/AKfycbwJzU9b1ORc5H8U_rBa_p7adyrtrznNVP6GfT_WcPc7tsXd3s8-B0C8dIE1ZZz4npkx/exec'
     var OutputDevice = $('#output')
     function Output(Content) { OutputDevice.html(Content) }
 
@@ -58,30 +80,38 @@
         return NewCard
     }
 
-    function RowClone() {
-        return $('#card-template .data-row').clone(true)
-    }
-
-    function MakeCard(HeaderRow, DataRow) {
-        var NewCard = CardClone()
-        var CardTable = NewCard.children('table').children('tbody')
-        for (const i in HeaderRow) {
-            var NewRow = RowClone()
-            NewRow.children('.data-key').html(HeaderRow[i])
-            NewRow.children('.data-value').html(DataRow[i])
-            NewRow.appendTo(CardTable)
-        }
+    function MakeCard(e) {
+        var NewCard = CardClone().prop('id', `card-${e.Key}`)
+        var CardContent = `${e.Name}<br>${e.Phone}<br>$&nbsp;${e.Claim}<br>${e.Invoice}<br>${e.PickUp}取`
+        if (e.Remark != null && e.Remark != '') CardContent += `<br>!! Remark:<br>${e.Remark}`
+        NewCard.html(CardContent)
         NewCard.appendTo(OutputDevice)
     }
 
     function ReadTableMockData() {
         return [
-            ["Key", "TimeStamp", "Name", "Phone", "Claim", "Invoice", "PickUp", "Status"],
-            [0, "abc", "Chan Tai Man", 91234567, 1500, "#101001", "太和", ""],
-            [1, "def", "Wong Ming1", 92345678, 688, "#101123, #101122", "大埔", "done"],
-            [2, "def123", "Wong Ming2", 92345678, 688, "#101123, #101122", "大埔", "done"],
-            [3, "def4456", "Wong Ming3", 92345678, 688, "#101123, #101122", "大埔", "done"]
+            ["Key", "Name", "Phone", "Claim", "Invoice", "PickUp", "Status", "Remark"],
+            [0, "Chan Tai Man", 91234567, 1500, "#101001", "太和", "", "123"],
+            [1, "Wong Ming1", 92345678, 688, "#101123, #101122", "大埔", "", ""],
+            [2, "Wong Ming2", 92345678, 688, "#101123, #101122", "大埔", "", "321"],
+            [3, "Wong Ming3 this is a very long name", 92345678, 688, "#101123, #101122", "大埔", "", ""]
         ]
+    }
+
+    function ConvertToMapArray(CSV) {
+        const HeaderRow = CSV[0]
+        var MapArray = []
+        var MapElement = {}
+        for (const FieldName of HeaderRow) MapElement[FieldName] = {}
+
+        for (const Row in CSV) {
+            if (Row > 0) {
+                var ResultantMap = structuredClone(MapElement)
+                for (const Col in HeaderRow) ResultantMap[HeaderRow[Col]] = CSV[Row][Col]
+                MapArray.push(ResultantMap)
+            }
+        }
+        return MapArray
     }
 
     function ReadTableMock() {
@@ -97,8 +127,8 @@
     }
 
     function ReadTable() {
-        return ReadTableMock()
-        return $.get(ActionURL, { action: 'read' })
+        //return ReadTableMock()
+        return $.get(ActionURL, { action: 'read', table: 'active' })
     }
 
     $('#mybutton').on('click', () => {
@@ -116,12 +146,23 @@
 
     $('#testbutton').on('click', () => {
         ReadTable().then((DataTable) => {
-            for (const i in DataTable) {
-                if (i == 0) continue
-                MakeCard(DataTable[0], DataTable[i])
-            }
+            var DataArray = ConvertToMapArray(DataTable)
+            console.log(DataArray)
+            OutputDevice.html("")
+            for (const Entry of DataArray) MakeCard(Entry)
         })
     })
+
+    $('.card').on('click', (e) => { console.log(e) })
+
+    function CheckAll() {
+        ReadTable().done((DataTable) => {
+            var DataArray = ConvertToMapArray(DataTable)
+            console.log(DataArray)
+            OutputDevice.html("")
+            for (const Entry of DataArray) MakeCard(Entry)
+        })
+    }
 
 </script>
 
