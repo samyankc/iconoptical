@@ -95,7 +95,7 @@
     <div id='card-template' class='hidden card'></div>
 
     <dialog id='registration-form'>
-        <form method='get' action='abc' class='center flex-container'>
+        <form method='get' action='https://script.google.com/macros/s/AKfycbxerZk_XKvlMP818IMUNK9elOhSEMObsW2HqiCzvgXrAUJHCw5ac_wqH9ArqkvVX0Sg/exec' class='center flex-container'>
             <input type="hidden" name='action' value='register'>
             <input type='text' name='name' placeholder='姓名' required>
             <input type='text' name='phone' placeholder='電話' required>
@@ -108,12 +108,26 @@
         </form>
     </dialog>
 
-    <dialog id='status-form'>
-        <form method='get' action='abc' class='center flex-container'>
-            <input type="hidden" name='action' id='action-holder'>
-            <input type="hidden" name='key' id='key-holder'>
-            <button class='hidden button-done colour-yellow' type='submit'>完成覆驗</button>
-            <button class='hidden button-undo colour-blue' type='submit'>回復待覆驗</button>
+    <dialog id='done-form'>
+        <form method='get' action='https://script.google.com/macros/s/AKfycbxerZk_XKvlMP818IMUNK9elOhSEMObsW2HqiCzvgXrAUJHCw5ac_wqH9ArqkvVX0Sg/exec' class='center flex-container'>
+            <input type="hidden" name='action' value='done'>
+            <input type="hidden" name='key' class='key-holder'>
+            <button class='button-done colour-yellow' type='submit'>完成覆驗</button>
+            <button class='colour-grey' type='submit' formmethod='dialog'>取消</button>
+        </form>
+    </dialog>
+
+    <dialog id='undo-form'>
+        <form method='get' action='https://script.google.com/macros/s/AKfycbxerZk_XKvlMP818IMUNK9elOhSEMObsW2HqiCzvgXrAUJHCw5ac_wqH9ArqkvVX0Sg/exec' class='center flex-container'>
+            <input type="hidden" name='action' value='undo'>
+            <input type="hidden" name='key' class='key-holder'>
+            <button class='button-undo colour-blue' type='submit'>回復待覆驗</button>
+            <button class='colour-grey' type='submit' formmethod='dialog'>取消</button>
+        </form>
+    </dialog>
+
+    <dialog id='empty-form'>
+        <form class='center flex-container'>
             <button class='colour-grey' type='submit' formmethod='dialog'>取消</button>
         </form>
     </dialog>
@@ -141,11 +155,18 @@
     }
 
     function MakeCard(e) {
-        var NewCard = CardClone().attr('data-key', e.Key)
+        var NewCard = CardClone().attr('data-key', e.Key).attr('data-status', e.Status)
         var CardContent = `${e.Name}<br>${e.Phone}<br>$&nbsp;${e.Claim}<br>${e.Invoice}<br>${e.PickUp}取`
         if (e.Remark != null && e.Remark != '') CardContent += `<br>!! Remark:<br>${e.Remark}`
         NewCard.html(CardContent)
-        NewCard.on('click', () => { $('#status-form')[0].showModal() })
+
+        var StatusFormName = { '待覆驗': 'done', '已覆驗': 'undo' }[e.Status] ?? 'empty'
+
+        NewCard.on('click', () => {
+            $(`#${StatusFormName}-form .key-holder`).attr('value', e.Key)
+            $(`#${StatusFormName}-form`)[0].showModal()
+        })
+
         NewCard.appendTo(OutputDevice)
     }
 
@@ -153,9 +174,9 @@
         return [
             ["Key", "Name", "Phone", "Claim", "Invoice", "PickUp", "Status", "Remark"],
             [0, "Chan Tai Man", 91234567, 1500, "#101001", "太和", "", "123"],
-            [1, "Wong Ming1", 92345678, 688, "#101123, #101122", "大埔", "", ""],
-            [2, "Wong Ming2", 92345678, 688, "#101123, #101122", "大埔", "", "321"],
-            [3, "Wong Ming3 this is a very long name", 92345678, 688, "#101123, #101122", "大埔", "", ""]
+            [1, "Wong Ming1", 92345678, 688, "#101123, #101122", "大埔", "待覆驗", ""],
+            [2, "Wong Ming2", 92345678, 688, "#101123, #101122", "大埔", "已覆驗", "321"],
+            [3, "Wong Ming3 this is a very long name", 92345678, 688, "#101123, #101122", "大埔", "待覆驗", ""]
         ]
     }
 
@@ -188,16 +209,9 @@
     }
 
     function ReadTable() {
-        return ReadTableMock()
+        //return ReadTableMock()
         return $.get(ActionURL, { action: 'list' })
     }
-
-    $('.card').on('click', (e) => {
-        
-        $('#status-form .button-done').removeClass('hidden')
-        console.log($(e.currentTarget).data('key'))
-
-    })
 
     function ListAll() {
         ReadTable().done((DataTable) => {
