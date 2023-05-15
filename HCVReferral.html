@@ -16,38 +16,73 @@
             margin: 0;
         }
 
-        .center {
-            margin: 0 auto;
-            padding: 2%;
-            width: fit-content;
-            max-width: 600px;
-        }
-
-        #output {
+        .flex-container {
             display: flex;
             flex-flow: row;
             flex-wrap: wrap;
         }
 
+        .center {
+            max-width: 600px;
+            margin: 0 auto;
+            width: fit-content;
+        }
+
+        input,
         button {
-            background-color: transparent;
-            padding: 5%;
-            margin: 5%;
-            width: 30vw;
-            /* border: 1px solid; */
+            width: 40vw;
+            max-width: 40%;
+            flex-basis: 40%;
+            margin: 1vh auto;
+            padding: 18px 2%;
+            font-size: 18px;
+            font-weight: 900;
+            text-shadow: 1px 0 white, -1px 0 white, 0 1px white, 0 -1px white;
+            border: 0;
+        }
+
+        input {
+            border: 1px solid grey;
+            border-radius: 10px;
+            padding-left: 4vw;
+        }
+
+        .colour-green {
+            background-color: rgb(118, 224, 91);
+        }
+
+        .colour-blue {
+            background-color: rgb(98, 201, 236);
+        }
+
+        .colour-yellow {
+            background-color: rgb(235, 235, 88);
+        }
+
+        .colour-grey {
+            background-color: rgb(90, 90, 90);
+        }
+
+        .colour-pink {
+            background-color: rgb(226, 153, 215);
+        }
+
+        .colour-red {
+            background-color: rgb(217, 72, 72);
         }
 
         .card {
             flex-basis: 40%;
             max-width: 40%;
-            border-radius: 1vw;
             margin: 1vh auto;
-            padding: 2%;
+            padding: 1%;
             font-weight: 600;
             background-color: rgba(144, 220, 230, 0.4);
-            /* white-space: nowrap;
-            overflow: hidden;
-            text-overflow:ellipsis; */
+            box-shadow: 2px 2px 5px grey;
+        }
+
+        .invisible {
+            visibility: hidden;
         }
 
         .hidden {
@@ -57,34 +92,60 @@
 </head>
 
 <body>
-    <div class="center">
-        <button>新登記</button><br>
-        <button>查看待覆驗</button>
-        <button>查看已覆驗</button>
-        <button>查看完成</button>
-        <button onclick="CheckAll()">查看全部</button>
-        <div id='output' class="center"></div>
-        <button id='mybutton' class="hidden">click me</button>
-        <button id='testbutton'>test</button>
+    <div id='card-template' class='hidden card'></div>
+
+    <dialog id='registration-form'>
+        <form method='get' action='abc' class='center flex-container'>
+            <input type="hidden" name='action' value='register'>
+            <input type='text' name='name' placeholder='姓名' required>
+            <input type='text' name='phone' placeholder='電話' required>
+            <input type='text' name='claim' placeholder='HCV金額' required>
+            <input type='text' name='invoice' placeholder='單號' required>
+            <input type='text' name='pickup' placeholder='取貨分店' required>
+            <input type='text' name='remark' placeholder='備註(可不填)'>
+            <button class='colour-green' type='submit'>登記</button>
+            <button class='colour-grey' type='button' onclick='$("#registration-form")[0].close()'>取消</button>
+        </form>
+    </dialog>
+
+    <dialog id='status-form'>
+        <form method='get' action='abc' class='center flex-container'>
+            <input type="hidden" name='action' id='action-holder'>
+            <input type="hidden" name='key' id='key-holder'>
+            <button class='hidden button-done colour-yellow' type='submit'>完成覆驗</button>
+            <button class='hidden button-undo colour-blue' type='submit'>回復待覆驗</button>
+            <button class='colour-grey' type='submit' formmethod='dialog'>取消</button>
+        </form>
+    </dialog>
+
+    <div class="center flex-container">
+        <button class="colour-green" onclick="$('#registration-form')[0].showModal()">登記</button>
+        <button class="colour-grey" onclick="ListAll()">查看全部</button>
+        <button class="colour-blue">待覆驗</button>
+        <button class="colour-yellow">已覆驗</button>
     </div>
-    <div id='card-template' class='card' style='display: none;'></div>
+    <div id='output' class="center flex-container"></div>
+    <div class='center' style='margin-top: 2em;'>
+        <a href='https://docs.google.com/spreadsheets/d/1Kfv_AOscXF1e8sjHO1Yg-cDzM4J5ScV1B8HsUV5EfQo/edit?usp=sharing'
+            target='_blank' style='text-decoration: none;'>Link to Google Sheet</a>
+    </div>
 </body>
+
 <script>
-    var ActionURL = 'https://script.google.com/macros/s/AKfycbwJzU9b1ORc5H8U_rBa_p7adyrtrznNVP6GfT_WcPc7tsXd3s8-B0C8dIE1ZZz4npkx/exec'
+    var ActionURL = 'https://script.google.com/macros/s/AKfycbxerZk_XKvlMP818IMUNK9elOhSEMObsW2HqiCzvgXrAUJHCw5ac_wqH9ArqkvVX0Sg/exec'
     var OutputDevice = $('#output')
     function Output(Content) { OutputDevice.html(Content) }
 
     function CardClone() {
-        var NewCard = $('#card-template').clone(true).removeAttr('style').removeAttr('id')
-        NewCard.children('table').children('tbody').children().remove()
-        return NewCard
+        return $('#card-template').clone(true).removeClass('hidden').removeAttr('id')
     }
 
     function MakeCard(e) {
-        var NewCard = CardClone().prop('id', `card-${e.Key}`)
+        var NewCard = CardClone().attr('data-key', e.Key)
         var CardContent = `${e.Name}<br>${e.Phone}<br>$&nbsp;${e.Claim}<br>${e.Invoice}<br>${e.PickUp}取`
         if (e.Remark != null && e.Remark != '') CardContent += `<br>!! Remark:<br>${e.Remark}`
         NewCard.html(CardContent)
+        NewCard.on('click', () => { $('#status-form')[0].showModal() })
         NewCard.appendTo(OutputDevice)
     }
 
@@ -127,35 +188,18 @@
     }
 
     function ReadTable() {
-        //return ReadTableMock()
-        return $.get(ActionURL, { action: 'read', table: 'active' })
+        return ReadTableMock()
+        return $.get(ActionURL, { action: 'list' })
     }
 
-    $('#mybutton').on('click', () => {
-        var newContent = '<div>Getting Response</div>';
-        ReadTable()
-            .fail(() => { Output('Fail'); })
-            .done((Table) => {
-                for (const Row in Table) {
-                    newContent += `<div class='card'>${Table[Row]}</div>`
-                    console.log(Table[Row])
-                }
-                Output(newContent);
-            })
+    $('.card').on('click', (e) => {
+        
+        $('#status-form .button-done').removeClass('hidden')
+        console.log($(e.currentTarget).data('key'))
+
     })
 
-    $('#testbutton').on('click', () => {
-        ReadTable().then((DataTable) => {
-            var DataArray = ConvertToMapArray(DataTable)
-            console.log(DataArray)
-            OutputDevice.html("")
-            for (const Entry of DataArray) MakeCard(Entry)
-        })
-    })
-
-    $('.card').on('click', (e) => { console.log(e) })
-
-    function CheckAll() {
+    function ListAll() {
         ReadTable().done((DataTable) => {
             var DataArray = ConvertToMapArray(DataTable)
             console.log(DataArray)
