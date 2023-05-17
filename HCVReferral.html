@@ -86,8 +86,29 @@
             box-shadow: 2px 2px 5px grey;
         }
 
-        dialog{
+        dialog {
             max-width: 400px;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid;
+            border-color: #FF3D00 transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .invisible {
@@ -101,10 +122,11 @@
 </head>
 
 <body>
+
     <div id='card-template' class='hidden card'></div>
 
     <dialog id='registration-form'>
-        <form onsubmit='AsyncSubmit(this); return false;' class='center flex-container'>
+        <form onsubmit='Register(this); return false;' class='center flex-container'>
             <input type="hidden" name='action' value='register'>
             <input type='text' name='name' placeholder='姓名' required>
             <input type='text' name='phone' placeholder='電話' required>
@@ -118,7 +140,7 @@
     </dialog>
 
     <dialog id='done-form'>
-        <form onsubmit='AsyncSubmit(this); return false;' class='center flex-container'>
+        <form onsubmit='SetStatus(this,"已覆驗"); return false;' class='center flex-container'>
             <input type="hidden" name='action' value='done'>
             <input type="hidden" name='key' class='key-holder'>
             <button class='button-done colour-yellow' type='submit'>完成覆驗</button>
@@ -127,7 +149,7 @@
     </dialog>
 
     <dialog id='undo-form'>
-        <form onsubmit='AsyncSubmit(this); return false;' class='center flex-container'>
+        <form onsubmit='SetStatus(this,"待覆驗"); return false;' class='center flex-container'>
             <input type="hidden" name='action' value='undo'>
             <input type="hidden" name='key' class='key-holder'>
             <button class='button-undo colour-blue' type='submit'>回復待覆驗</button>
@@ -141,15 +163,16 @@
         </form>
     </dialog>
 
-    <div id='dash-board' style='background-color: white; font-size: 10px; position: fixed; top:0;'>
-
-    </div>
     <div style='height: 20px'></div>
     <div class="center flex-container">
         <button class="colour-green" onclick="$('#registration-form')[0].showModal()">登記</button>
         <button class="colour-pink" id='button-check-all' onclick='CardOnlyShow("待覆驗","已覆驗")'>查看全部</button>
         <button class="colour-blue" onclick='CardOnlyShow("待覆驗")'>待覆驗</button>
         <button class="colour-yellow" onclick='CardOnlyShow("已覆驗")'>已覆驗</button>
+    </div>
+
+    <div class='loader hidden' style='position:relative; left:50%; top:1vh; translate: -50%;' id='loader-widget'></div>
+
     </div>
     <div id='output' class="center flex-container"></div>
     <div class='center' style='margin-top: 2em;'>
@@ -162,8 +185,10 @@
 
     var ActionURL = 'https://script.google.com/macros/s/AKfycbxerZk_XKvlMP818IMUNK9elOhSEMObsW2HqiCzvgXrAUJHCw5ac_wqH9ArqkvVX0Sg/exec'
 
-    var DashBoardDevice = $('#dash-board')
-    function DashBoard(Content) { DashBoardDevice.html(Content) }
+    var LoaderWidget = $('#loader-widget')
+    function Loading(isLoading) {
+        if (isLoading) LoaderWidget.removeClass('hidden'); else LoaderWidget.addClass('hidden')
+    }
 
     var OutputDevice = $('#output')
     function Output(Content) { OutputDevice.html(Content) }
@@ -185,18 +210,17 @@
     }
 
     var DataBase = null
+
     function ReloadDataBase() {
-        $('#button-check-all').attr('disabled', true)
-        DashBoard('Loading DataBase...')
-        $.get(ActionURL, { action: 'list' }, (R) => {
-            DataBase = ConvertToMapArray(R)
-            DashBoard('Loading Complete.')
-            Output('')
-            for (const Entry of DataBase) MakeCard(Entry)
-            $('#button-check-all').removeAttr('disabled')
-        })
+        return $.get(ActionURL, { action: 'list' }, (R) => { DataBase = ConvertToMapArray(R) })
     }
-    ReloadDataBase()
+
+    Loading(true)
+    ReloadDataBase().then(() => {
+        ReloadCards()
+        Loading(false)
+    })
+
 
     function CloseModal(that) {
         $(that).parents('dialog').last()[0].close()
@@ -208,7 +232,6 @@
 
     function MakeCard(e) {
         var NewCard = CardClone().attr('data-key', e.Key).attr('data-status', e.Status)
-        // .addClass((e.Status == "已覆驗" ? 'colour-yellow' : 'colour-blue'))
         var CardContent = `${e.Name}<br>${e.Phone}<br>$&nbsp;${e.Claim}<br>${e.Invoice}<br>${e.PickUp}取`
         if (e.Remark != null && e.Remark != '') CardContent += `<br>!! Remark:<br>${e.Remark}`
         NewCard.html(CardContent)
@@ -223,37 +246,31 @@
         NewCard.appendTo(OutputDevice)
     }
 
-    function ReadTableMockData() {
-        return [
-            ["Key", "Name", "Phone", "Claim", "Invoice", "PickUp", "Status", "Remark"],
-            [0, "Chan Tai Man", 91234567, 1500, "#101001", "太和", "", "123"],
-            [1, "Wong Ming1", 92345678, 688, "#101123, #101122", "大埔", "待覆驗", ""],
-            [2, "Wong Ming2", 92345678, 688, "#101123, #101122", "大埔", "已覆驗", "321"],
-            [3, "Wong Ming3 this is a very long name", 92345678, 688, "#101123, #101122", "大埔", "待覆驗", ""]
-        ]
-    }
-
-    function ReadTableMock() {
-        var L = (cb) => {
-            cb(ReadTableMockData())
-            return ReadTableMock()
-        }
-        return {
-            fail: ReadTableMock, // no-op
-            done: L,
-            then: L
-        }
+    function ReloadCards() {
+        Output('')
+        for (const Entry of DataBase) MakeCard(Entry)
     }
 
     function AsyncSubmit(Form) {
         CloseModal(Form)
-        DashBoard('Making Request...')
-        $.get(ActionURL, $(Form).serialize(), (e) => { DashBoard(''); ReloadDataBase() })
+        return $.get(ActionURL, $(Form).serialize())
     }
 
-    function ReadTable() {
-        // return ReadTableMock()
-        return $.get(ActionURL, { action: 'list' })
+    function Register(that) {
+        Loading(true)
+        AsyncSubmit(that).then(() => {
+            ReloadDataBase().then(() => {
+                ReloadCards()
+                Loading(false)
+            })
+        })
+    }
+
+    function SetStatus(that, NewStatus) {
+        AsyncSubmit(that)
+        var Key = $(that).children('input[name="key"]').val()
+        for (const Entry of DataBase) if (Entry.Key == Key) Entry.Status = NewStatus
+        ReloadCards()
     }
 
     function CardOnlyShow(...Status) {
@@ -261,7 +278,6 @@
         for (const S of Status) {
             $(`.card[data-status='${S}']`).removeClass('hidden')
         }
-
     }
 
 
