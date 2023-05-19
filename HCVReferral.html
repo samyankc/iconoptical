@@ -167,7 +167,7 @@
     <div style='height: 20px'></div>
     <div class="center flex-container">
         <button class="colour-green" onclick="$('#registration-form')[0].showModal()">登記</button>
-        <button class="colour-pink" id='button-check-all' onclick='CardClearFilter()'>查看全部</button>
+        <button class="colour-pink" id='button-check-all' onclick='CardShowAll()'>查看全部</button>
         <button class="colour-blue" onclick='CardOnlyShow("待覆驗")'>待覆驗</button>
         <button class="colour-yellow" onclick='CardOnlyShow("已覆驗")'>已覆驗</button>
         <input autofocus id='keyword-searcher' type='text' placeholder='搜尋' oninput='SearchAmongVisibleCard()'>
@@ -280,15 +280,22 @@
         $('.card').not('#card-template').removeClass('hidden')
     }
 
-    function SearchAmongVisibleCard(Keyword) {
+    function CardShowAll(){
+        CardClearFilter()
+        $('#keyword-searcher').val('')
+    }
+
+    function SearchAmongVisibleCard() {
         CardClearFilter()
         var Keyword = $('#keyword-searcher').val()
         $('.card').not(`:contains(${Keyword})`).addClass('hidden')
     }
 
     function CardOnlyShow(Status) {
-        CardClearFilter()
+        //CardClearFilter()
+        SearchAmongVisibleCard()
         $('.card').not(`[data-status='${Status}']`).addClass('hidden')
+
     }
 
 
